@@ -4,7 +4,6 @@ import pygame
 
 class Canvas:
 
-
     def __init__(self, screen_size = (600,600), background_color = (255,255,255)):
         self.screen_size = screen_size
         self.background_color = background_color
