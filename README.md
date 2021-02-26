@@ -2,4 +2,4 @@
 
 ## A package designed to simplify your Pygame development!
 
-[https://pypi.org/project/EasyPygame/](pip install EasyPygame)
+# Install the package by entering: **[pip install EasyPygame]**(https://pypi.org/project/EasyPygame/) into your terminal
