@@ -32,12 +32,12 @@ class Engine:
     """
     The Engine class creates your EzPygame window, and handles runtime events. 
     """
-    def __init__(self, game_title="EzPygame Window", fps=60, canvas=Canvas()):
+    def __init__(self, game_title="EzPygame Window", fps=60, canvas=None):
         pygame.init()
         self.game_title = game_title
         self.clock = pygame.time.Clock() # The clock will be used to control how fast the screen updates
         self.fps = fps
-        self.canvas = canvas
+        self.canvas = canvas if canvas is not None else Canvas()
         pygame.display.set_caption(self.game_title)
 
     def await_closure(self):

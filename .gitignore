@@ -4,3 +4,14 @@ __pycache__/
 .vscode/
 *.egg-info/
 *Individual Frames/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+venv/
+env/
+.env
+.DS_Store
+*.log

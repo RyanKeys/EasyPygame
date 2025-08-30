@@ -1,5 +1,5 @@
 import pygame
-from EasyPygame.input_controller import KeyboardController
+from .input_controller import KeyboardController
 
 class Character(object):
     
@@ -27,6 +27,7 @@ class Character(object):
         for enemy_sprite in other_sprites:
             if self.box_collider.colliderect(enemy_sprite.box_collider):
                 return True
+        return False
 
 
 class Player(Character):
