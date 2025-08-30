@@ -45,6 +45,7 @@ def game_loop():
 - **Game Engine**: Handles the main game loop, FPS, and window management
 - **Canvas**: Manages the game window and drawing surface
 - **Collision Detection**: Built-in collision detection between game objects
+- **Built-in Exit Controls**: Automatic handling of window close button and ESC key for game exit
 
 ## API Reference
 
@@ -56,7 +57,7 @@ canvas = Canvas(screen_size=(800, 600), background_color=(255, 255, 255))
 ```
 
 ### Engine
-Manages the game loop and timing.
+Manages the game loop and timing. Automatically handles window close events and ESC key for game exit.
 
 ```python
 engine = Engine(fps=60, canvas=canvas, game_title="My Game")
