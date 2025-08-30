@@ -179,25 +179,6 @@ def main():
     max_score = 5
     game_over = False
     
-    # Store original game loop method for ESC handling
-    original_await_closure = engine.await_closure
-    
-    def custom_await_closure():
-        """Custom event handler that includes ESC key"""
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                import sys
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    import sys
-                    sys.exit()
-    
-    # Replace the engine's await_closure method
-    engine.await_closure = custom_await_closure
-    
     # Game loop
     @engine.game_loop
     def game_loop():
