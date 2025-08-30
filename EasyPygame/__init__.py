@@ -8,7 +8,7 @@ from .actors import Player, Character
 from .game_engine import Engine, Canvas
 from .input_controller import KeyboardController
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Ryan Keys"
 __email__ = "r.keys1998@gmail.com"
 

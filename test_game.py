@@ -8,7 +8,8 @@ canvas = Canvas(screen_size = (400,400), background_color = (0,0,0))
 engine = Engine(fps=60, canvas=canvas)
 
 player = Player(spawn_coordinates=(engine.canvas.screen_size[0]//2, engine.canvas.screen_size[1]-20), size=50)
-character = Character(spawn_coordinates=(engine.canvas.screen_size[0]//2, 0), size=50, sprite="Fantasy RPG NPCs - Individual Frames\Alchemist\Alchemist_Idle_1.png")
+# Use default character without sprite since the sprite file doesn't exist
+character = Character(spawn_coordinates=(engine.canvas.screen_size[0]//2, 0), size=50)
 
 char_list = [player,character]
 # Repeats following code until told otherwise. AKA 'void Loop()'
