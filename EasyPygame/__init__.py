@@ -7,6 +7,7 @@ This package provides easy-to-use classes and functions for creating games with 
 from .actors import Player, Character, Coordinate
 from .game_engine import Engine, Canvas, ScreenSize, Color
 from .input_controller import KeyboardController
+from .mouse_controller import MouseController, Position
 
 __version__ = "0.1.2"
 __author__ = "Ryan Keys"
@@ -19,8 +20,10 @@ __all__ = [
     'Engine',
     'Canvas',
     'KeyboardController',
+    'MouseController',
     # Type aliases
     'Coordinate',
     'ScreenSize',
     'Color',
+    'Position',
 ]

@@ -10,7 +10,7 @@ Or simply: python tests.py
 
 import unittest
 import pygame
-from EasyPygame import Player, Character, Engine, Canvas, KeyboardController
+from EasyPygame import Player, Character, Engine, Canvas, KeyboardController, MouseController
 
 
 class TestEasyPygame(unittest.TestCase):
@@ -118,6 +118,32 @@ class TestEasyPygame(unittest.TestCase):
         self.assertEqual(engine.fps, 60)
         self.assertIsNotNone(engine.canvas)
         self.assertIsInstance(engine.canvas, Canvas)
+
+    def test_mouse_controller_creation(self):
+        """Test MouseController class creation and methods"""
+        mouse = MouseController()
+        
+        # Test that methods exist and are callable
+        self.assertTrue(callable(mouse.get_position))
+        self.assertTrue(callable(mouse.is_pressed))
+        self.assertTrue(callable(mouse.is_left_pressed))
+        self.assertTrue(callable(mouse.is_right_pressed))
+        self.assertTrue(callable(mouse.is_over))
+        self.assertTrue(callable(mouse.is_clicking))
+        
+        # Test get_position returns a tuple
+        pos = mouse.get_position()
+        self.assertIsInstance(pos, tuple)
+        self.assertEqual(len(pos), 2)
+
+    def test_mouse_is_over(self):
+        """Test MouseController.is_over method"""
+        mouse = MouseController()
+        char = Character(spawn_coordinates=(0, 0), size=100)
+        
+        # is_over should return a boolean
+        result = mouse.is_over(char)
+        self.assertIsInstance(result, bool)
 
 
 def run_tests():
