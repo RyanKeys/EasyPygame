@@ -5,6 +5,8 @@ Space Dodge - EasyPygame Demo
 
 A survival game where you dodge falling asteroids.
 
+NOTE: Run `pip install -e .` from the repo root before running this example.
+
 Features:
     - WASD movement with smooth controls
     - Increasing difficulty over time

@@ -5,6 +5,8 @@ Pong - EasyPygame Demo
 
 A polished Pong implementation showcasing EasyPygame's capabilities.
 
+NOTE: Run `pip install -e .` from the repo root before running this example.
+
 Features:
     - Player vs AI gameplay
     - On-screen score display

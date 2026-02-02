@@ -2,15 +2,21 @@
 
 Polished game demos showcasing EasyPygame's features.
 
-## Installation
+## ⚠️ Before Running Examples
+
+You must install EasyPygame first! From the repo root:
 
 ```bash
-pip install EasyPygame
-
-# Or install from source:
 cd EasyPygame
 pip install -e .
 ```
+
+Or if published to PyPI:
+```bash
+pip install EasyPygame
+```
+
+**If you get `ModuleNotFoundError: No module named 'EasyPygame'`**, you haven't installed it yet.
 
 ## Running the Examples
 

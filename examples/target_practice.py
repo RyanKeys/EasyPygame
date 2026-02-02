@@ -5,6 +5,8 @@ Target Practice - EasyPygame Demo
 
 A mouse-based target shooting game showcasing EasyPygame's mouse input.
 
+NOTE: Run `pip install -e .` from the repo root before running this example.
+
 Features:
     - Click on targets to score points
     - Targets shrink over time (harder to hit)
