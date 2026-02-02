@@ -1,91 +1,118 @@
 # EasyPygame
 
-### A package designed to simplify your Pygame development!
-
-EasyPygame provides a simplified API for creating games with Pygame, featuring easy-to-use classes for players, characters, game engines, and input handling.
+A package designed to simplify your Pygame development!
 
 ## Installation
 
-Install the package using pip:
-
 ```bash
 pip install EasyPygame
+
+# Or from source:
+git clone https://github.com/RyanKeys/EasyPygame.git
+cd EasyPygame
+pip install -e .
 ```
 
 ## Quick Start
 
-Here's a simple example to get you started:
-
 ```python
 from EasyPygame import Player, Character, Engine, Canvas
 
-# Create a canvas and game engine
 canvas = Canvas(screen_size=(800, 600), background_color=(0, 0, 0))
 engine = Engine(fps=60, canvas=canvas)
 
-# Create a player and character
-player = Player(spawn_coordinates=(400, 550), size=50)
-character = Character(spawn_coordinates=(400, 50), size=50)
+player = Player(spawn_coordinates=(400, 500), size=40)
 
-actors = [player, character]
-
-# Define the game loop
 @engine.game_loop
 def game_loop():
-    for actor in actors:
-        actor.draw(engine.canvas.surface)
-        if isinstance(actor, Player):
-            actor.handle_keys(canvas=engine.canvas)
+    player.handle_keys(canvas=canvas)
+    player.draw(canvas.surface)
 ```
 
 ## Features
 
-- **Simple Player class**: Easy player creation with built-in keyboard controls (WASD)
-- **Character class**: Create NPCs with optional sprite support
-- **Game Engine**: Handles the main game loop, FPS, and window management
-- **Canvas**: Manages the game window and drawing surface
-- **Collision Detection**: Built-in collision detection between game objects
-- **Built-in Exit Controls**: Automatic handling of window close button and ESC key for game exit
+- **Player** — Keyboard-controlled character (WASD)
+- **Character** — Base class for game objects with sprites
+- **Engine** — Game loop, FPS, window management
+- **Canvas** — Window and drawing surface
+- **KeyboardController** — Customizable keyboard input
+- **MouseController** — Mouse position, clicks, hover detection
+- **Collision Detection** — Built-in `check_collision()` method
+- **Type Hints** — Full type annotations on public API
+
+## Mouse Input
+
+```python
+from EasyPygame import MouseController, Character
+
+mouse = MouseController()
+
+# In game loop:
+pos = mouse.get_position()           # (x, y) tuple
+clicking = mouse.is_left_pressed()   # bool
+hovering = mouse.is_over(character)  # bool
+```
+
+## Examples
+
+See the `examples/` folder for complete games:
+
+| Example | Description | Controls |
+|---------|-------------|----------|
+| `pong.py` | Classic Pong vs AI | W/S, R to restart |
+| `target_practice.py` | Click targets to score | Mouse, R to restart |
+| `space_dodge.py` | Dodge falling asteroids | WASD, R to restart |
+
+Run examples:
+```bash
+cd EasyPygame
+pip install -e .
+python examples/pong.py
+```
 
 ## API Reference
 
 ### Canvas
-Creates and manages the game window.
-
 ```python
 canvas = Canvas(screen_size=(800, 600), background_color=(255, 255, 255))
+canvas.reset(screen_size=(1024, 768))  # Resize
 ```
 
 ### Engine
-Manages the game loop and timing. Automatically handles window close events and ESC key for game exit.
-
 ```python
 engine = Engine(fps=60, canvas=canvas, game_title="My Game")
+
+@engine.game_loop
+def loop():
+    # Your game logic here
+    pass
 ```
 
-### Player
-A character controlled by keyboard input (WASD keys).
-
+### Player / Character
 ```python
 player = Player(spawn_coordinates=(100, 100), size=32)
+player.handle_keys(canvas=canvas)  # WASD movement
+player.draw(surface)
+player.check_collision([other_characters])  # Returns bool
+
+character = Character(spawn_coordinates=(200, 200), size=32, sprite="sprite.png")
 ```
 
-### Character
-A basic game character that can optionally use sprites.
-
+### MouseController
 ```python
-# Character with default colored square
-character = Character(spawn_coordinates=(200, 200), size=32)
-
-# Character with custom sprite
-character = Character(spawn_coordinates=(200, 200), size=32, sprite="path/to/sprite.png")
+mouse = MouseController()
+mouse.get_position()        # (x, y)
+mouse.is_pressed(button=0)  # 0=left, 1=middle, 2=right
+mouse.is_left_pressed()     # Shorthand
+mouse.is_over(character)    # Hover detection
+mouse.is_clicking(character)  # Hover + click
 ```
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.9+
 - pygame
 
 ## License
 
-MIT License
+MIT
