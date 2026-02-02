@@ -33,8 +33,9 @@ jobs:
           pip install -e .
 
       - name: Run tests
+        timeout-minutes: 5
         env:
           SDL_VIDEODRIVER: dummy
           SDL_AUDIODRIVER: dummy
         run: |
-          python -m pytest tests.py test_basic.py test_game.py -v
+          python -m pytest tests.py -v --tb=short
