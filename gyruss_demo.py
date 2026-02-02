@@ -29,6 +29,10 @@ class Bullet:
     """Simple bullet that travels in a straight line."""
     
     def __init__(self, start_x: float, start_y: float, target_x: float, target_y: float, speed: float = 12):
+        # Store start position for debug drawing
+        self.start_x = start_x
+        self.start_y = start_y
+        
         # Current position (floats for precision)
         self.x = start_x
         self.y = start_y
@@ -45,20 +49,42 @@ class Bullet:
             self.vx = 0
             self.vy = -speed  # Default: shoot up
         
+        # Store velocity for debug (should NEVER change)
+        self.debug_vx = self.vx
+        self.debug_vy = self.vy
+        
+        # Track path for debug visualization
+        self.path = [(start_x, start_y)]
+        
         self.alive = True
         self.radius = 4
     
     def update(self):
         """Move bullet in straight line."""
+        # ONLY these two lines affect position
         self.x += self.vx
         self.y += self.vy
+        
+        # Track path
+        self.path.append((self.x, self.y))
         
         # Die if off screen
         if self.x < -50 or self.x > 850 or self.y < -50 or self.y > 650:
             self.alive = False
     
     def draw(self, surface):
-        """Draw bullet."""
+        """Draw bullet and its path."""
+        # Draw path trail (should be perfectly straight)
+        if len(self.path) > 1:
+            pygame.draw.lines(surface, (100, 100, 0), False, 
+                            [(int(p[0]), int(p[1])) for p in self.path], 1)
+        
+        # Draw line from start to current (should be straight)
+        pygame.draw.line(surface, (0, 100, 100), 
+                        (int(self.start_x), int(self.start_y)),
+                        (int(self.x), int(self.y)), 1)
+        
+        # Draw bullet
         pygame.draw.circle(surface, (255, 255, 0), (int(self.x), int(self.y)), self.radius)
     
     def get_rect(self) -> pygame.Rect:
