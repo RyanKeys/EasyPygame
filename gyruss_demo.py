@@ -190,7 +190,7 @@ def main():
     spawn_timer = 0
     game_over = False
     last_shot = 0
-    shot_cooldown = 0.15
+    shot_cooldown = 1.0
     
     running = True
     while running:
