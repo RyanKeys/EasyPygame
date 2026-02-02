@@ -68,6 +68,11 @@ class Bullet:
         # Track path
         self.path.append((self.x, self.y))
         
+        # Die if reached center
+        dist_to_center = math.sqrt((self.x - SCREEN_CENTER[0])**2 + (self.y - SCREEN_CENTER[1])**2)
+        if dist_to_center < 15:
+            self.alive = False
+        
         # Die if off screen
         if self.x < -50 or self.x > 850 or self.y < -50 or self.y > 650:
             self.alive = False
