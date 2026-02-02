@@ -5,19 +5,6 @@ EasyPygame Gyruss Demo
 
 A classic Gyruss-style arcade game implementation using EasyPygame framework.
 
-Gyruss is a shoot-em-up game where the player controls a ship that moves around
-the perimeter of a circular playing field, shooting at enemies that spiral
-outward from the center.
-
-Features:
-- Player ship that moves around the screen perimeter in a circle
-- Enemies that spiral outward from the center
-- Projectile shooting system with radial trajectory
-- Collision detection between projectiles and enemies
-- Player-enemy collision (game over)
-- Score tracking with on-screen display
-- Classic arcade-style gameplay
-
 Controls:
 - A: Move counterclockwise around the perimeter
 - D: Move clockwise around the perimeter  
@@ -34,282 +21,250 @@ from EasyPygame import Character, Engine, Canvas
 from EasyPygame.input_controller import KeyboardController
 
 
-class GyrusController(KeyboardController):
-    """Custom controller for Gyruss-style circular movement and shooting"""
-    
-    def __init__(self, movement_speed=0.05):
-        self.angular_speed = movement_speed
-        self.last_shot_time = 0
-        self.shot_cooldown = 0.2
-    
-    def handle_keys(self, player, canvas):
-        """Handle circular movement and shooting"""
-        key = pygame.key.get_pressed()
-        current_time = time.time()
-        
-        # Circular movement around perimeter
-        if key[pygame.K_a]:
-            player.angle -= self.angular_speed
-        if key[pygame.K_d]:
-            player.angle += self.angular_speed
-            
-        # Keep angle in [0, 2π] range
-        player.angle = player.angle % (2 * math.pi)
-        
-        # Update player position based on angle
-        player.update_position(canvas)
-        
-        # Shooting
-        can_shoot = current_time - self.last_shot_time > self.shot_cooldown
-        if (key[pygame.K_w] or key[pygame.K_SPACE]) and can_shoot:
-            self.last_shot_time = current_time
-            return "shoot"
-        
-        return None
+# Screen center - bullets aim here
+SCREEN_CENTER = (400, 300)
 
 
-class GyrusPlayer(Character):
-    """Player ship that moves around the screen perimeter"""
+class Bullet:
+    """Simple bullet that travels in a straight line."""
     
-    def __init__(self, canvas):
-        self.angle = math.pi / 2  # Start at bottom
-        self.radius = min(canvas.screen_size[0], canvas.screen_size[1]) // 2 - 30
-        self.center_x = canvas.screen_size[0] // 2
-        self.center_y = canvas.screen_size[1] // 2
+    def __init__(self, start_x: float, start_y: float, target_x: float, target_y: float, speed: float = 12):
+        # Current position (floats for precision)
+        self.x = start_x
+        self.y = start_y
         
-        # Calculate initial position
-        x = self.center_x + self.radius * math.cos(self.angle)
-        y = self.center_y + self.radius * math.sin(self.angle)
+        # Calculate direction ONCE (normalized vector toward target)
+        dx = target_x - start_x
+        dy = target_y - start_y
+        dist = math.sqrt(dx * dx + dy * dy)
         
-        super().__init__(spawn_coordinates=(int(x) - 10, int(y) - 10), size=20)
-        self.image.fill((0, 255, 0))
-        self.controller = GyrusController()
-    
-    def update_position(self, canvas):
-        """Update position based on current angle"""
-        x = self.center_x + self.radius * math.cos(self.angle)
-        y = self.center_y + self.radius * math.sin(self.angle)
-        self.box_collider.centerx = int(x)
-        self.box_collider.centery = int(y)
-    
-    def handle_keys(self, canvas):
-        return self.controller.handle_keys(self, canvas)
-    
-    def get_shot_trajectory(self):
-        """Calculate direction vector for shooting toward center"""
-        dx = self.center_x - self.box_collider.centerx
-        dy = self.center_y - self.box_collider.centery
-        distance = math.sqrt(dx*dx + dy*dy)
+        if dist > 0:
+            self.vx = (dx / dist) * speed
+            self.vy = (dy / dist) * speed
+        else:
+            self.vx = 0
+            self.vy = -speed  # Default: shoot up
         
-        if distance > 0:
-            return (dx / distance, dy / distance)
-        return (0, 0)
+        self.alive = True
+        self.radius = 4
     
-    def reset(self, canvas):
-        """Reset player to starting position"""
-        self.angle = math.pi / 2
-        self.update_position(canvas)
+    def update(self):
+        """Move bullet in straight line."""
+        self.x += self.vx
+        self.y += self.vy
+        
+        # Die if off screen
+        if self.x < -50 or self.x > 850 or self.y < -50 or self.y > 650:
+            self.alive = False
+    
+    def draw(self, surface):
+        """Draw bullet."""
+        pygame.draw.circle(surface, (255, 255, 0), (int(self.x), int(self.y)), self.radius)
+    
+    def get_rect(self) -> pygame.Rect:
+        """Get collision rect."""
+        return pygame.Rect(int(self.x) - self.radius, int(self.y) - self.radius, 
+                          self.radius * 2, self.radius * 2)
 
 
-class Projectile(Character):
-    """Projectile fired by the player toward the center"""
+class Enemy:
+    """Enemy that spirals outward from center."""
     
-    def __init__(self, center_x, center_y, direction_x, direction_y, speed=10):
-        # Initialize at dummy position, then set center properly
-        super().__init__(spawn_coordinates=(0, 0), size=6)
-        self.image.fill((255, 255, 0))
-        
-        # Set position using center coordinates
-        self.box_collider.centerx = int(center_x)
-        self.box_collider.centery = int(center_y)
-        
-        # Track float position for smooth movement (center coords)
-        self.float_x = float(center_x)
-        self.float_y = float(center_y)
-        
-        # Velocity is constant - bullet travels in straight line
-        self.velocity_x = direction_x * speed
-        self.velocity_y = direction_y * speed
-        self.lifetime = 60
+    def __init__(self):
+        self.angle = random.uniform(0, 2 * math.pi)
+        self.radius = 20  # Distance from center
+        self.spiral_speed = 1.0
+        self.rotation_speed = 0.025
+        self.size = 16
+        self.alive = True
     
-    def update(self, canvas):
-        """Update projectile position using float coordinates"""
-        # Update float position (straight line motion)
-        self.float_x += self.velocity_x
-        self.float_y += self.velocity_y
-        
-        # Sync to box_collider center
-        self.box_collider.centerx = int(self.float_x)
-        self.box_collider.centery = int(self.float_y)
-        
-        self.lifetime -= 1
-        
-        # Remove if out of bounds or lifetime expired
-        if (self.lifetime <= 0 or 
-            self.box_collider.right < 0 or self.box_collider.left > canvas.screen_size[0] or
-            self.box_collider.bottom < 0 or self.box_collider.top > canvas.screen_size[1]):
-            return False
-        return True
-
-
-class Enemy(Character):
-    """Enemy that spirals outward from the center"""
-    
-    def __init__(self, canvas, spawn_angle=None):
-        self.center_x = canvas.screen_size[0] // 2
-        self.center_y = canvas.screen_size[1] // 2
-        
-        self.angle = spawn_angle if spawn_angle is not None else random.uniform(0, 2 * math.pi)
-        self.radius = 10
-        self.spiral_speed = 1.2
-        self.angular_speed = 0.03
-        
-        x = self.center_x + self.radius * math.cos(self.angle)
-        y = self.center_y + self.radius * math.sin(self.angle)
-        
-        super().__init__(spawn_coordinates=(int(x), int(y)), size=18)
-        self.image.fill((255, 50, 50))
-        
-        self.max_radius = min(canvas.screen_size[0], canvas.screen_size[1]) // 2 + 20
-    
-    def update(self, canvas):
-        """Update enemy position in spiral pattern"""
+    def update(self):
+        """Spiral outward."""
         self.radius += self.spiral_speed
-        self.angle += self.angular_speed
+        self.angle += self.rotation_speed
         
-        x = self.center_x + self.radius * math.cos(self.angle)
-        y = self.center_y + self.radius * math.sin(self.angle)
-        self.box_collider.centerx = int(x)
-        self.box_collider.centery = int(y)
-        
-        if self.radius > self.max_radius:
-            return False
-        return True
+        if self.radius > 350:
+            self.alive = False
+    
+    @property
+    def x(self) -> float:
+        return SCREEN_CENTER[0] + self.radius * math.cos(self.angle)
+    
+    @property
+    def y(self) -> float:
+        return SCREEN_CENTER[1] + self.radius * math.sin(self.angle)
+    
+    def draw(self, surface):
+        """Draw enemy."""
+        pygame.draw.circle(surface, (255, 50, 50), (int(self.x), int(self.y)), self.size)
+    
+    def get_rect(self) -> pygame.Rect:
+        """Get collision rect."""
+        return pygame.Rect(int(self.x) - self.size, int(self.y) - self.size,
+                          self.size * 2, self.size * 2)
 
 
-def draw_ui(surface, score, font):
-    """Draw score on screen"""
-    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
-    surface.blit(score_text, (10, 10))
+class Player:
+    """Player that moves around the perimeter."""
+    
+    def __init__(self):
+        self.angle = math.pi / 2  # Start at bottom
+        self.orbit_radius = 250
+        self.speed = 0.05
+        self.size = 15
+    
+    @property
+    def x(self) -> float:
+        return SCREEN_CENTER[0] + self.orbit_radius * math.cos(self.angle)
+    
+    @property
+    def y(self) -> float:
+        return SCREEN_CENTER[1] + self.orbit_radius * math.sin(self.angle)
+    
+    def update(self, keys):
+        """Handle movement."""
+        if keys[pygame.K_a]:
+            self.angle -= self.speed
+        if keys[pygame.K_d]:
+            self.angle += self.speed
+    
+    def draw(self, surface):
+        """Draw player."""
+        pygame.draw.circle(surface, (0, 255, 100), (int(self.x), int(self.y)), self.size)
+    
+    def get_rect(self) -> pygame.Rect:
+        """Get collision rect."""
+        return pygame.Rect(int(self.x) - self.size, int(self.y) - self.size,
+                          self.size * 2, self.size * 2)
 
 
-def draw_game_over(surface, score, font_large, font_small):
-    """Draw game over screen"""
-    overlay = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 180))
-    surface.blit(overlay, (0, 0))
-    
-    cx, cy = surface.get_width() // 2, surface.get_height() // 2
-    
-    title = font_large.render("GAME OVER", True, (255, 80, 80))
-    surface.blit(title, (cx - title.get_width() // 2, cy - 60))
-    
-    score_text = font_small.render(f"Final Score: {score}", True, (255, 255, 255))
-    surface.blit(score_text, (cx - score_text.get_width() // 2, cy))
-    
-    restart = font_small.render("Press R to restart", True, (180, 180, 180))
-    surface.blit(restart, (cx - restart.get_width() // 2, cy + 50))
+def check_collision(rect1: pygame.Rect, rect2: pygame.Rect) -> bool:
+    """Check if two rects collide."""
+    return rect1.colliderect(rect2)
 
 
 def main():
-    """Main Gyruss game function"""
-    print("Gyruss Demo - EasyPygame")
-    print("A/D: Move around perimeter")
-    print("W/SPACE: Shoot toward center")
-    print("Avoid the red enemies!")
-    
-    canvas = Canvas(screen_size=(800, 600), background_color=(0, 0, 20))
-    engine = Engine(fps=60, canvas=canvas, game_title="Gyruss Demo - EasyPygame")
-    
-    # Fonts
+    pygame.init()
+    screen = pygame.display.set_mode((800, 600))
+    pygame.display.set_caption("Gyruss Demo - EasyPygame")
+    clock = pygame.time.Clock()
     font = pygame.font.Font(None, 36)
     font_large = pygame.font.Font(None, 64)
     
-    # Game objects
-    player = GyrusPlayer(canvas)
-    projectiles = []
-    enemies = []
+    player = Player()
+    bullets: list[Bullet] = []
+    enemies: list[Enemy] = []
     
-    # Game state
     score = 0
-    enemy_spawn_timer = 0
-    enemy_spawn_interval = 75
+    spawn_timer = 0
     game_over = False
+    last_shot = 0
+    shot_cooldown = 0.15
     
-    @engine.game_loop
-    def game_loop():
-        nonlocal score, enemy_spawn_timer, game_over, projectiles, enemies
+    running = True
+    while running:
+        # Events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
         
         keys = pygame.key.get_pressed()
         
         if game_over:
             if keys[pygame.K_r]:
-                # Reset game
-                score = 0
-                enemy_spawn_timer = 0
-                game_over = False
-                projectiles = []
+                # Reset
+                player = Player()
+                bullets = []
                 enemies = []
-                player.reset(canvas)
+                score = 0
+                spawn_timer = 0
+                game_over = False
         else:
-            # Player input
-            action = player.handle_keys(canvas)
-            if action == "shoot":
-                direction = player.get_shot_trajectory()
-                proj_x = player.box_collider.centerx
-                proj_y = player.box_collider.centery
-                projectiles.append(Projectile(proj_x, proj_y, direction[0], direction[1]))
+            # Update player
+            player.update(keys)
             
-            # Update projectiles
-            for projectile in projectiles[:]:
-                if not projectile.update(canvas):
-                    projectiles.remove(projectile)
+            # Shooting
+            now = time.time()
+            if (keys[pygame.K_w] or keys[pygame.K_SPACE]) and now - last_shot > shot_cooldown:
+                last_shot = now
+                # Fire bullet from player toward center
+                bullets.append(Bullet(player.x, player.y, SCREEN_CENTER[0], SCREEN_CENTER[1]))
+            
+            # Update bullets
+            for bullet in bullets:
+                bullet.update()
+            bullets = [b for b in bullets if b.alive]
             
             # Spawn enemies
-            enemy_spawn_timer += 1
-            if enemy_spawn_timer >= enemy_spawn_interval:
-                enemy_spawn_timer = 0
-                enemies.append(Enemy(canvas))
+            spawn_timer += 1
+            if spawn_timer >= 60:
+                spawn_timer = 0
+                enemies.append(Enemy())
             
             # Update enemies
-            for enemy in enemies[:]:
-                if not enemy.update(canvas):
-                    enemies.remove(enemy)
+            for enemy in enemies:
+                enemy.update()
+            enemies = [e for e in enemies if e.alive]
             
-            # Check projectile-enemy collisions
-            for projectile in projectiles[:]:
+            # Bullet-enemy collision
+            for bullet in bullets[:]:
                 for enemy in enemies[:]:
-                    if projectile.check_collision([enemy]):
-                        if projectile in projectiles:
-                            projectiles.remove(projectile)
-                        if enemy in enemies:
-                            enemies.remove(enemy)
+                    if check_collision(bullet.get_rect(), enemy.get_rect()):
+                        bullet.alive = False
+                        enemy.alive = False
                         score += 10
-                        break
+            bullets = [b for b in bullets if b.alive]
+            enemies = [e for e in enemies if e.alive]
             
-            # Check player-enemy collision (game over)
-            if player.check_collision(enemies):
-                game_over = True
+            # Player-enemy collision
+            player_rect = player.get_rect()
+            for enemy in enemies:
+                if check_collision(player_rect, enemy.get_rect()):
+                    game_over = True
         
-        # Draw everything
-        player.draw(canvas.surface)
+        # Draw
+        screen.fill((0, 0, 20))
         
-        for projectile in projectiles:
-            projectile.draw(canvas.surface)
+        # Draw orbit circle (visual guide)
+        pygame.draw.circle(screen, (30, 30, 50), SCREEN_CENTER, player.orbit_radius, 1)
         
+        # Draw center point
+        pygame.draw.circle(screen, (50, 50, 80), SCREEN_CENTER, 5)
+        
+        # Draw game objects
         for enemy in enemies:
-            enemy.draw(canvas.surface)
+            enemy.draw(screen)
+        for bullet in bullets:
+            bullet.draw(screen)
+        player.draw(screen)
         
-        draw_ui(canvas.surface, score, font)
+        # Draw UI
+        score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))
         
         if game_over:
-            draw_game_over(canvas.surface, score, font_large, font)
+            # Overlay
+            overlay = pygame.Surface((800, 600), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            screen.blit(overlay, (0, 0))
+            
+            title = font_large.render("GAME OVER", True, (255, 80, 80))
+            screen.blit(title, (400 - title.get_width() // 2, 240))
+            
+            final = font.render(f"Final Score: {score}", True, (255, 255, 255))
+            screen.blit(final, (400 - final.get_width() // 2, 320))
+            
+            restart = font.render("Press R to restart", True, (150, 150, 150))
+            screen.blit(restart, (400 - restart.get_width() // 2, 380))
+        
+        pygame.display.flip()
+        clock.tick(60)
+    
+    pygame.quit()
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nGame interrupted")
-    finally:
-        pygame.quit()
+    main()
