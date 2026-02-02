@@ -114,8 +114,10 @@ class Enemy:
         self.radius += self.spiral_speed
         self.angle += self.rotation_speed
         
+        # Respawn at center if reached edge
         if self.radius > 350:
-            self.alive = False
+            self.radius = 20
+            self.angle = random.uniform(0, 2 * math.pi)
     
     @property
     def x(self) -> float:
@@ -190,7 +192,7 @@ def main():
     spawn_timer = 0
     game_over = False
     last_shot = 0
-    shot_cooldown = 1.0
+    shot_cooldown = 0.5
     
     running = True
     while running:
