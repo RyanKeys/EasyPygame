@@ -114,24 +114,31 @@ class GyrusPlayer(Character):
 class Projectile(Character):
     """Projectile fired by the player toward the center"""
     
-    def __init__(self, start_x, start_y, direction_x, direction_y, speed=10):
-        super().__init__(spawn_coordinates=(int(start_x), int(start_y)), size=6)
+    def __init__(self, center_x, center_y, direction_x, direction_y, speed=10):
+        # Initialize at dummy position, then set center properly
+        super().__init__(spawn_coordinates=(0, 0), size=6)
         self.image.fill((255, 255, 0))
         
-        # Track float position for smooth movement
-        self.float_x = float(start_x)
-        self.float_y = float(start_y)
+        # Set position using center coordinates
+        self.box_collider.centerx = int(center_x)
+        self.box_collider.centery = int(center_y)
+        
+        # Track float position for smooth movement (center coords)
+        self.float_x = float(center_x)
+        self.float_y = float(center_y)
+        
+        # Velocity is constant - bullet travels in straight line
         self.velocity_x = direction_x * speed
         self.velocity_y = direction_y * speed
         self.lifetime = 60
     
     def update(self, canvas):
         """Update projectile position using float coordinates"""
-        # Update float position
+        # Update float position (straight line motion)
         self.float_x += self.velocity_x
         self.float_y += self.velocity_y
         
-        # Sync to box_collider
+        # Sync to box_collider center
         self.box_collider.centerx = int(self.float_x)
         self.box_collider.centery = int(self.float_y)
         
